@@ -1,5 +1,5 @@
 use rand::{rngs::StdRng, Rng, SeedableRng};
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 
 use crate::models::InsertDirection;
 pub use crate::models::{PasswordCharRule, DIGITS, LOWERCASE, SYMBOLS, UPPERCASE};
@@ -158,4 +158,133 @@ impl Generator {
         let i = self.rng.gen_range(0..elements.len());
         elements[i].clone()
     }
+}
+
+#[test]
+fn generate_different_sizes() {
+    let mut generator = Generator::new();
+    for i in 0..255 {
+        let password = generator.generate_password(i, true, true, true, true);
+        assert_eq!(password.len() as u8, i, "Password is not the right length");
+    }
+}
+
+#[test]
+fn generate_pin() {
+    let mut generator = Generator::new();
+    let password = generator.generate_password(5, false, true, false, false);
+    assert_eq!(password.len(), 5, "Password is not the right length");
+    for c in password.chars() {
+        assert!(
+            crate::models::DIGITS.contains(c),
+            "Password has something other than a digit"
+        );
+    }
+}
+
+#[test]
+fn generate_random() {
+    let mut generator = Generator::new();
+    let password = generator.generate_password(10, true, true, true, true);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, true, true, true, true);
+}
+
+#[test]
+fn generate_with_two_rules() {
+    let mut generator = Generator::new();
+    let password = generator.generate_password(10, true, true, false, false);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, true, true, false, false);
+
+    let password = generator.generate_password(10, true, false, true, false);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, true, false, true, false);
+
+    let password = generator.generate_password(10, true, false, false, true);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, true, false, false, true);
+
+    let password = generator.generate_password(10, false, true, true, false);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, false, true, true, false);
+
+    let password = generator.generate_password(10, false, false, true, true);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, false, false, true, true);
+}
+
+#[test]
+fn generate_with_lower_upper_digit_rules() {
+    let mut generator = Generator::new();
+    let password = generator.generate_password(10, false, true, true, true);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, false, true, true, true);
+}
+
+#[test]
+fn generate_with_symbol_lower_upper_rules() {
+    let mut generator = Generator::new();
+    let password = generator.generate_password(10, true, false, true, true);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, true, false, true, true);
+}
+
+#[test]
+fn generate_with_symbol_lower_digit_rules() {
+    let mut generator = Generator::new();
+    let password = generator.generate_password(10, true, true, false, true);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, true, true, false, true);
+}
+
+#[test]
+fn generate_with_symbol_upper_digit_rules() {
+    let mut generator = Generator::new();
+    let password = generator.generate_password(10, true, true, true, false);
+    assert_eq!(password.len(), 10, "Password is not the right length");
+    assert_password(&password, true, true, true, false);
+}
+
+#[test]
+fn generate_unique_passwords() {
+    let mut generator = Generator::new();
+    let mut previously_generated_passwords = HashSet::new();
+    for _ in 0..100000 {
+        let password = generator.generate_password(10, true, true, true, false);
+        assert_eq!(password.len(), 10, "Password is not the right length");
+        assert_password(&password, true, true, true, false);
+        assert!(
+            !previously_generated_passwords.contains(password.as_str()),
+            "The password has already been generated"
+        );
+        previously_generated_passwords.insert(password);
+    }
+}
+
+#[cfg(test)]
+fn assert_password(
+    password: &str,
+    should_have_symbol: bool,
+    should_have_number: bool,
+    should_have_upper: bool,
+    should_have_lower: bool,
+) {
+    let mut has_symbol = false;
+    let mut has_number = false;
+    let mut has_lower = false;
+    let mut has_upper = false;
+    for c in password.chars() {
+        has_symbol = has_symbol || crate::models::SYMBOLS.contains(c);
+        has_number = has_number || crate::models::DIGITS.contains(c);
+        has_lower = has_lower || crate::models::LOWERCASE.contains(c);
+        has_upper = has_upper || crate::models::UPPERCASE.contains(c);
+    }
+
+    assert!(
+        !(should_have_symbol ^ has_symbol)
+            && !(should_have_number ^ has_number)
+            && !(should_have_lower ^ has_lower)
+            && !(should_have_upper ^ has_upper)
+    )
 }
