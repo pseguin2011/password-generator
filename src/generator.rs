@@ -1,5 +1,5 @@
 use rand::{rngs::StdRng, Rng, SeedableRng};
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 
 use crate::models::InsertDirection;
 pub use crate::models::{PasswordCharRule, DIGITS, LOWERCASE, SYMBOLS, UPPERCASE};
@@ -13,6 +13,7 @@ pub struct Generator {
 
 impl Generator {
     pub fn new() -> Self {
+        // The random number generator should use the OS entropy for more secure generation
         let rng = StdRng::from_entropy();
         Self {
             // creates character arrays for simpler use
@@ -249,7 +250,7 @@ fn generate_with_symbol_upper_digit_rules() {
 #[test]
 fn generate_unique_passwords() {
     let mut generator = Generator::new();
-    let mut previously_generated_passwords = HashSet::new();
+    let mut previously_generated_passwords = std::collections::HashSet::new();
     for _ in 0..100000 {
         let password = generator.generate_password(10, true, true, true, false);
         assert_eq!(password.len(), 10, "Password is not the right length");
@@ -263,6 +264,16 @@ fn generate_unique_passwords() {
 }
 
 #[cfg(test)]
+/// Helper function to assert a password and it's rules
+/// Verifies that at least one character of each applied rule is included
+/// Then asserts the requested rules with the ones that were found in the password
+///
+/// ## Arguments
+/// - `password` The password being asserted
+/// - `should_have_symbol` whether a symbol should exist in the password
+/// - `should_have_number` whether a number should exist in the password
+/// - `should_have_upper` whether a uppercase letter should exist in the password
+/// - `should_have_lower` whether a lowercase letter should exist in the password
 fn assert_password(
     password: &str,
     should_have_symbol: bool,
@@ -286,5 +297,5 @@ fn assert_password(
             && !(should_have_number ^ has_number)
             && !(should_have_lower ^ has_lower)
             && !(should_have_upper ^ has_upper)
-    )
+    );
 }
