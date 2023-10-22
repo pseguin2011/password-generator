@@ -1,3 +1,4 @@
+use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::collections::VecDeque;
 
 use crate::models::InsertDirection;
@@ -7,16 +8,19 @@ pub struct Generator {
     upper: Vec<char>,
     digit: Vec<char>,
     symbol: Vec<char>,
+    rng: StdRng,
 }
 
 impl Generator {
     pub fn new() -> Self {
+        let rng = StdRng::from_entropy();
         Self {
             // creates character arrays for simpler use
             lower: LOWERCASE.chars().collect(),
             upper: UPPERCASE.chars().collect(),
             digit: DIGITS.chars().collect(),
             symbol: SYMBOLS.chars().collect(),
+            rng,
         }
     }
 
@@ -32,14 +36,14 @@ impl Generator {
     /// ## Returns
     /// The generated password
     pub fn generate_password(
-        &self,
+        &mut self,
         len: u8,
         with_symbols: bool,
         with_numbers: bool,
         with_uppercase: bool,
         with_lowercase: bool,
     ) -> String {
-        let password_rules = Self::generate_password_rules(
+        let password_rules = self.generate_password_rules(
             len,
             with_symbols,
             with_numbers,
@@ -63,6 +67,7 @@ impl Generator {
     /// ## Returns
     /// A randomly ordered collection of password character rules
     fn generate_password_rules(
+        &mut self,
         mut len: u8,
         with_symbols: bool,
         with_numbers: bool,
@@ -95,7 +100,7 @@ impl Generator {
         // Random sorting of the password rules
         let mut password_char_rules = VecDeque::new();
         for rule in password_char_rules_unsorted {
-            match Self::get_random_element(&[InsertDirection::Back, InsertDirection::Front]) {
+            match self.get_random_element(&[InsertDirection::Back, InsertDirection::Front]) {
                 InsertDirection::Back => password_char_rules.push_back(rule),
                 InsertDirection::Front => password_char_rules.push_front(rule),
             }
@@ -112,28 +117,34 @@ impl Generator {
     /// ## Returns
     /// A complete password
     fn fill_password<'a>(
-        &self,
+        &mut self,
         password_rules: impl Iterator<Item = &'a PasswordCharRule>,
     ) -> String {
+        let lower = self.lower.clone();
+        let upper = self.upper.clone();
+        let digit = self.digit.clone();
+        let symbol = self.symbol.clone();
         password_rules
-            .map(|rule| match rule {
-                PasswordCharRule::Upper => Self::get_random_element(&self.upper),
-                PasswordCharRule::Lower => Self::get_random_element(&self.lower),
-                PasswordCharRule::Digit => Self::get_random_element(&self.digit),
-                PasswordCharRule::Symbols => Self::get_random_element(&self.symbol),
+            .map(move |rule| match rule {
+                PasswordCharRule::Upper => self.get_random_element(&upper),
+                PasswordCharRule::Lower => self.get_random_element(&lower),
+                PasswordCharRule::Digit => self.get_random_element(&digit),
+                PasswordCharRule::Symbols => self.get_random_element(&symbol),
             })
             .collect::<String>()
     }
 
     /// Selects a random element from the array provided
     /// using a Criptographically secure pseudo rng to determine the index
+    /// https://rust-random.github.io/rand/rand/rngs/struct.StdRng.html
     ///
     /// ## Arguments
     /// - `elements` the array of elements to select from
     ///
     /// ## Returns
     /// A single element from the array
-    pub fn get_random_element<T: Clone>(_elements: &[T]) -> T {
-        unimplemented!()
+    pub fn get_random_element<T: Clone>(&mut self, elements: &[T]) -> T {
+        let i = self.rng.gen_range(0..elements.len());
+        elements[i].clone()
     }
 }
