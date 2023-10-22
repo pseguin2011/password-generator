@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+use crate::models::InsertDirection;
 pub use crate::models::{PasswordCharRule, DIGITS, LOWERCASE, SYMBOLS, UPPERCASE};
 pub struct Generator {
     lower: Vec<char>,
@@ -11,6 +12,7 @@ pub struct Generator {
 impl Generator {
     pub fn new() -> Self {
         Self {
+            // creates character arrays for simpler use
             lower: LOWERCASE.chars().collect(),
             upper: UPPERCASE.chars().collect(),
             digit: DIGITS.chars().collect(),
@@ -61,13 +63,44 @@ impl Generator {
     /// ## Returns
     /// A randomly ordered collection of password character rules
     fn generate_password_rules(
-        _len: u8,
-        _with_symbols: bool,
-        _with_numbers: bool,
-        _with_uppercase: bool,
-        _with_lowercase: bool,
+        mut len: u8,
+        with_symbols: bool,
+        with_numbers: bool,
+        with_uppercase: bool,
+        with_lowercase: bool,
     ) -> VecDeque<PasswordCharRule> {
-        unimplemented!()
+        let mut distributed_rules = VecDeque::new();
+        if with_symbols {
+            distributed_rules.push_back(PasswordCharRule::Symbols);
+        }
+        if with_numbers {
+            distributed_rules.push_back(PasswordCharRule::Digit);
+        }
+        if with_lowercase {
+            distributed_rules.push_back(PasswordCharRule::Lower);
+        }
+        if with_uppercase {
+            distributed_rules.push_back(PasswordCharRule::Upper);
+        }
+        // This ensures that all rules are inserted evenly (ex: 5 lowercase and 1 symbol will not happen)
+        let mut password_char_rules_unsorted = Vec::new();
+        while len > 0 {
+            if let Some(next) = distributed_rules.pop_front() {
+                password_char_rules_unsorted.push(next);
+                distributed_rules.push_back(next);
+            }
+            len -= 1;
+        }
+
+        // Random sorting of the password rules
+        let mut password_char_rules = VecDeque::new();
+        for rule in password_char_rules_unsorted {
+            match Self::get_random_element(&[InsertDirection::Back, InsertDirection::Front]) {
+                InsertDirection::Back => password_char_rules.push_back(rule),
+                InsertDirection::Front => password_char_rules.push_front(rule),
+            }
+        }
+        password_char_rules
     }
 
     /// Using the password char rule collection,
