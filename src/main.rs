@@ -56,7 +56,7 @@ fn execute_command_from_args(matches: &ArgMatches, generator: &mut Generator) {
             let generated_password = generator.generate_password(len, true, true, true, true);
             println!("Generated fully random password: {}", generated_password);
             eprintln!(
-                "Fully random password's strength: {}",
+                "Fully random password's strength: {:.0}%",
                 generator.get_password_strength(len, true, true, true, true)
             );
             return;
@@ -65,7 +65,7 @@ fn execute_command_from_args(matches: &ArgMatches, generator: &mut Generator) {
             let generated_password = generator.generate_password(len, false, true, false, false);
             println!("Generated pin: {}", generated_password);
             eprintln!(
-                "Generated pin's strength: {}",
+                "Generated pin's strength: {:.0}%",
                 generator.get_password_strength(len, false, true, false, false)
             );
             return;
@@ -80,7 +80,7 @@ fn execute_command_from_args(matches: &ArgMatches, generator: &mut Generator) {
     let generated_password = generator.generate_password(len, is_sym, is_num, is_cap, true);
     println!("Generated password: {}", generated_password);
     eprintln!(
-        "Fully random password's strength: {}",
+        "Fully random password's strength: {:.0}%",
         generator.get_password_strength(len, is_sym, is_num, is_cap, true)
     );
 }

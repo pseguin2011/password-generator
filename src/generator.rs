@@ -25,15 +25,53 @@ impl Generator {
         }
     }
 
+    /// Calculates the strength of the password
+    /// based on the rules applied to the password
+    /// and it's length
+    ///
+    /// ## Arguments
+    /// - `len` the password length
+    /// - `with_symbols` whether to include symbols
+    /// - `with_digits` whether to include digits
+    /// - `with_uppercase` whether to include uppercase characters
+    /// - `with_lowercase` whether to include lowercase characters
+    ///
+    /// ## Returns
+    /// the password strength percentage
     pub fn get_password_strength(
         &self,
-        _len: u8,
-        _with_symbols: bool,
-        _with_numbers: bool,
-        _with_uppercase: bool,
-        _with_lowercase: bool,
-    ) -> u64 {
-        unimplemented!()
+        len: u8,
+        with_symbols: bool,
+        with_numbers: bool,
+        with_uppercase: bool,
+        with_lowercase: bool,
+    ) -> f64 {
+        if len == 0 {
+            return 0.0_f64;
+        } else if len == 1 {
+            return 0.0_f64;
+        }
+        let max_multiplier: f64 = 32.0 + 10.0 + 26.0 + 26.0; // all possible password options
+
+        // this password options used
+        let mut multiplier: f64 = 0.0;
+        if with_symbols {
+            multiplier += 32.0;
+        }
+        if with_numbers {
+            multiplier += 10.0;
+        }
+        if with_uppercase {
+            multiplier += 26.0;
+        }
+        if with_lowercase {
+            multiplier += 26.0;
+        }
+        // The possible combinations of passwords
+        let a = (len as f64).powf(multiplier);
+        let b: f64 = (255.0_f64).powf(max_multiplier);
+        // wanted to increase the baseline to a min of 20% for low strength
+        20.0 + (a.log(b) * 80.0)
     }
 
     /// Generates a password with the provided rules
