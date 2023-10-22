@@ -29,6 +29,8 @@ fn main() {
             ]),
         )
         .get_matches();
+
+    println!("Welcome to the password generator 5000");
     execute_command_from_matches(matches, &mut generator);
 }
 
