@@ -7,25 +7,25 @@ fn main() {
     let mut generator = Generator::new();
     let matches = Command::new("password")
         .subcommand(
-            Command::new("generate").args(&[
+            Command::new("password-generate").args(&[
                 Arg::new("length")
                     .long("length")
                     .value_parser(value_parser!(u8))
-                    .action(clap::ArgAction::Set)
+                    .action(ArgAction::Set)
                     .required(true),
                 Arg::new("numbers")
                     .long("numbers")
-                    .action(clap::ArgAction::SetTrue),
+                    .action(ArgAction::SetTrue),
                 Arg::new("symbols")
                     .long("symbols")
-                    .action(clap::ArgAction::SetTrue),
+                    .action(ArgAction::SetTrue),
                 Arg::new("capitalized")
                     .long("capitalized")
-                    .action(clap::ArgAction::SetTrue),
+                    .action(ArgAction::SetTrue),
                 Arg::new("type")
                     .long("type")
-                    .action(clap::ArgAction::Set)
-                    .value_parser(["random", "pin"]),
+                    .action(ArgAction::Set)
+                    .value_parser(["random", "pin", "memorable"]),
             ]),
         )
         .get_matches();
@@ -34,7 +34,7 @@ fn main() {
 
 fn execute_command_from_matches(matches: ArgMatches, generator: &mut Generator) {
     match matches.subcommand() {
-        Some(("generate", args)) => {
+        Some(("password-generate", args)) => {
             if args.args_present() {
                 execute_command_from_args(&args, generator)
             }
@@ -53,27 +53,34 @@ fn execute_command_from_args(matches: &ArgMatches, generator: &mut Generator) {
         .and_then(|s| Some(s.as_str()))
     {
         Some("random") => {
-            println!(
-                "Generated random password: {}",
-                generator.generate_password(len, true, true, true, true)
+            let generated_password = generator.generate_password(len, true, true, true, true);
+            println!("Generated fully random password: {}", generated_password);
+            eprintln!(
+                "Fully random password's strength: {}",
+                generator.get_password_strength(len, true, true, true, true)
             );
             return;
         }
         Some("pin") => {
-            println!(
-                "Generated pin: {}",
-                generator.generate_password(len, false, true, false, false)
+            let generated_password = generator.generate_password(len, false, true, false, false);
+            println!("Generated pin: {}", generated_password);
+            eprintln!(
+                "Generated pin's strength: {}",
+                generator.get_password_strength(len, false, true, false, false)
             );
             return;
         }
+        Some("memorable") => unimplemented!(),
         _ => {}
     }
 
     let is_num = matches.get_flag("numbers");
     let is_cap = matches.get_flag("capitalized");
     let is_sym = matches.get_flag("symbols");
-    println!(
-        "Generated Password: {}",
-        generator.generate_password(len, is_sym, is_num, is_cap, true)
+    let generated_password = generator.generate_password(len, is_sym, is_num, is_cap, true);
+    println!("Generated password: {}", generated_password);
+    eprintln!(
+        "Fully random password's strength: {}",
+        generator.get_password_strength(len, is_sym, is_num, is_cap, true)
     );
 }

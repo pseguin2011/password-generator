@@ -24,6 +24,17 @@ impl Generator {
         }
     }
 
+    pub fn get_password_strength(
+        &self,
+        _len: u8,
+        _with_symbols: bool,
+        _with_numbers: bool,
+        _with_uppercase: bool,
+        _with_lowercase: bool,
+    ) -> u64 {
+        unimplemented!()
+    }
+
     /// Generates a password with the provided rules
     ///
     /// ## Arguments
