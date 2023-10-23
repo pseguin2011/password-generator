@@ -19,7 +19,7 @@ The following arguments can be passed to the running command
 - `--capitalized` if the password should include capitalized letters
 
 ## Note
-By default, lowercase letters will be included in the password rules
+By default, lowercase letters will be included in the password rules and the password length is 10
 
 To provide a secure generation of passwords, a CSprng was used to randomly select characters in the password, and the entropy of the host device is used to seed the rng.
 

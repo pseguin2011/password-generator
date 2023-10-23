@@ -12,7 +12,7 @@ fn main() {
                     .long("length")
                     .value_parser(value_parser!(u8))
                     .action(ArgAction::Set)
-                    .required(true),
+                    .default_value("10"),
                 Arg::new("numbers")
                     .long("numbers")
                     .action(ArgAction::SetTrue),
@@ -41,7 +41,7 @@ fn execute_command_from_matches(matches: ArgMatches, generator: &mut Generator) 
                 execute_command_from_args(&args, generator)
             }
         }
-        _ => unimplemented!(),
+        _ => eprintln!("Error: Please choose a valid subcommand: (password-generate)"),
     }
 }
 
