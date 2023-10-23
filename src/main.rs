@@ -82,7 +82,7 @@ fn execute_command_from_args(matches: &ArgMatches, generator: &mut Generator) {
     let generated_password = generator.generate_password(len, is_sym, is_num, is_cap, true);
     println!("Generated password: {}", generated_password);
     eprintln!(
-        "Fully random password's strength: {:.0}%",
+        "Password's strength: {:.0}%",
         generator.get_password_strength(len, is_sym, is_num, is_cap, true)
     );
 }
