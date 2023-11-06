@@ -1,9 +1,12 @@
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
+use error::PasswordGeneratorError;
 use generator::Generator;
 
+pub mod error;
 pub mod generator;
 pub mod models;
-fn main() {
+
+fn main() -> Result<(), PasswordGeneratorError> {
     let mut generator = Generator::new();
     let matches = Command::new("password")
         .subcommand(
@@ -31,24 +34,39 @@ fn main() {
         .get_matches();
 
     println!("Welcome to the password generator 5000");
-    execute_command_from_matches(matches, &mut generator);
+    execute_command_from_matches(matches, &mut generator)
 }
 
-fn execute_command_from_matches(matches: ArgMatches, generator: &mut Generator) {
+fn execute_command_from_matches(
+    matches: ArgMatches,
+    generator: &mut Generator,
+) -> Result<(), PasswordGeneratorError> {
     match matches.subcommand() {
         Some(("password-generate", args)) => {
             if args.args_present() {
-                execute_command_from_args(&args, generator)
+                execute_command_from_args(&args, generator)?;
+                return Ok(());
             }
+            Err(PasswordGeneratorError::ArgumentsNotFound)
         }
-        _ => eprintln!("Error: Please choose a valid subcommand: (password-generate)"),
+        _ => {
+            eprintln!("Error: Please choose a valid subcommand: (password-generate)");
+            Err(PasswordGeneratorError::CommandNotFound)
+        }
     }
 }
 
-fn execute_command_from_args(matches: &ArgMatches, generator: &mut Generator) {
-    let len: u8 = *matches
-        .get_one("length")
-        .expect("length should be a positive number between 0 and 255");
+fn execute_command_from_args(
+    matches: &ArgMatches,
+    generator: &mut Generator,
+) -> Result<(), PasswordGeneratorError> {
+    let len: u8 = match matches.get_one("length") {
+        Some(len) => *len,
+        None => {
+            eprintln!("length should be a positive number between 0 and 255");
+            return Err(PasswordGeneratorError::InvalidArgument);
+        }
+    };
 
     match matches
         .get_one::<String>("type")
@@ -61,7 +79,7 @@ fn execute_command_from_args(matches: &ArgMatches, generator: &mut Generator) {
                 "Fully random password's strength: {:.0}%",
                 generator.get_password_strength(len, true, true, true, true)
             );
-            return;
+            return Ok(());
         }
         Some("pin") => {
             let generated_password = generator.generate_password(len, false, true, false, false);
@@ -70,7 +88,7 @@ fn execute_command_from_args(matches: &ArgMatches, generator: &mut Generator) {
                 "Generated pin's strength: {:.0}%",
                 generator.get_password_strength(len, false, true, false, false)
             );
-            return;
+            return Ok(());
         }
         Some("memorable") => unimplemented!(),
         _ => {}
@@ -85,4 +103,5 @@ fn execute_command_from_args(matches: &ArgMatches, generator: &mut Generator) {
         "Password's strength: {:.0}%",
         generator.get_password_strength(len, is_sym, is_num, is_cap, true)
     );
+    Ok(())
 }
