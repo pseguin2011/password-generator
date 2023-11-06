@@ -4,24 +4,14 @@ use std::collections::VecDeque;
 use crate::models::InsertDirection;
 pub use crate::models::{PasswordCharRule, DIGITS, LOWERCASE, SYMBOLS, UPPERCASE};
 pub struct Generator {
-    lower: Vec<char>,
-    upper: Vec<char>,
-    digit: Vec<char>,
-    symbol: Vec<char>,
     rng: StdRng,
 }
 
 impl Generator {
     pub fn new() -> Self {
         // The random number generator should use the OS entropy for more secure generation
-        let rng = StdRng::from_entropy();
         Self {
-            // creates character arrays for simpler use
-            lower: LOWERCASE.chars().collect(),
-            upper: UPPERCASE.chars().collect(),
-            digit: DIGITS.chars().collect(),
-            symbol: SYMBOLS.chars().collect(),
-            rng,
+            rng: StdRng::from_entropy(),
         }
     }
 
@@ -170,16 +160,12 @@ impl Generator {
         &mut self,
         password_rules: impl Iterator<Item = &'a PasswordCharRule>,
     ) -> String {
-        let lower = self.lower.clone();
-        let upper = self.upper.clone();
-        let digit = self.digit.clone();
-        let symbol = self.symbol.clone();
         password_rules
-            .map(move |rule| match rule {
-                PasswordCharRule::Upper => self.get_random_element(&upper),
-                PasswordCharRule::Lower => self.get_random_element(&lower),
-                PasswordCharRule::Digit => self.get_random_element(&digit),
-                PasswordCharRule::Symbols => self.get_random_element(&symbol),
+            .map(|rule| match rule {
+                PasswordCharRule::Upper => self.get_random_element(&UPPERCASE),
+                PasswordCharRule::Lower => self.get_random_element(&LOWERCASE),
+                PasswordCharRule::Digit => self.get_random_element(&DIGITS),
+                PasswordCharRule::Symbols => self.get_random_element(&SYMBOLS),
             })
             .collect::<String>()
     }
@@ -215,7 +201,7 @@ fn generate_pin() {
     assert_eq!(password.len(), 5, "Password is not the right length");
     for c in password.chars() {
         assert!(
-            crate::models::DIGITS.contains(c),
+            DIGITS.contains(&c),
             "Password has something other than a digit"
         );
     }
@@ -324,16 +310,26 @@ fn assert_password(
     let mut has_lower = false;
     let mut has_upper = false;
     for c in password.chars() {
-        has_symbol = has_symbol || crate::models::SYMBOLS.contains(c);
-        has_number = has_number || crate::models::DIGITS.contains(c);
-        has_lower = has_lower || crate::models::LOWERCASE.contains(c);
-        has_upper = has_upper || crate::models::UPPERCASE.contains(c);
+        has_symbol = has_symbol || SYMBOLS.contains(&c);
+        has_number = has_number || DIGITS.contains(&c);
+        has_lower = has_lower || LOWERCASE.contains(&c);
+        has_upper = has_upper || UPPERCASE.contains(&c);
     }
 
     assert!(
-        !(should_have_symbol ^ has_symbol)
-            && !(should_have_number ^ has_number)
-            && !(should_have_lower ^ has_lower)
-            && !(should_have_upper ^ has_upper)
+        !(should_have_symbol ^ has_symbol),
+        "A symbol was expected but missing in the generated password"
+    );
+    assert!(
+        !(should_have_number ^ has_number),
+        "A number was expected but missing in the generated password"
+    );
+    assert!(
+        !(should_have_lower ^ has_lower),
+        "A lowercase letter was expected but missing in the generated password"
+    );
+    assert!(
+        !(should_have_upper ^ has_upper),
+        "An uppercase letter was expected but missing in the generated password"
     );
 }
